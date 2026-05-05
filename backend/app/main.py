@@ -32,12 +32,16 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="英语句子结构图解器 API", lifespan=lifespan)
 
+def _get_allowed_origins() -> list[str]:
+    raw = os.getenv("ALLOWED_ORIGINS", "")
+    extra = [o.strip() for o in raw.split(",") if o.strip()]
+    defaults = ["http://localhost:5173", "http://127.0.0.1:5173"]
+    return list(dict.fromkeys(defaults + extra))
+
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-    ],
+    allow_origins=_get_allowed_origins(),
     allow_methods=["POST", "GET", "OPTIONS"],
     allow_headers=["*"],
 )

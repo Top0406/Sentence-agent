@@ -42,6 +42,9 @@ npm run dev
 
 ```env
 ANALYZER_PROVIDER=mock
+
+# 允许访问后端的前端域名，逗号分隔（本地开发留空即可）
+ALLOWED_ORIGINS=
 ```
 
 第一阶段不需要任何 API key。
@@ -187,6 +190,84 @@ vercel --prod
 # 后续部署
 vercel --prod
 ```
+
+---
+
+## Render 部署（后端）
+
+后端是 FastAPI 应用，可部署到 Render Free 套餐。仓库根目录已有 `render.yaml`，Render 会自动识别。
+
+### Render 服务配置
+
+| 项目 | 值 |
+|---|---|
+| Service Type | Web Service |
+| Runtime | Python |
+| Root Directory | `backend` |
+| Build Command | `pip install -r requirements.txt` |
+| Start Command | `uvicorn app.main:app --host 0.0.0.0 --port $PORT` |
+
+### 环境变量
+
+| 变量 | 值 | 说明 |
+|---|---|---|
+| `ANALYZER_PROVIDER` | `mock` | 已在 render.yaml 中预设 |
+| `ALLOWED_ORIGINS` | `https://your-app.vercel.app` | **必须手动填写**，填 Vercel 前端地址 |
+
+---
+
+### 方式一：Render 网页操作（推荐新手）
+
+1. 将整个仓库推送到 GitHub（`git push`）。
+
+2. 打开 [render.com](https://render.com) → 登录 → **New** → **Web Service**。
+
+3. 选择 GitHub 仓库，点击 **Connect**。
+
+4. 填写配置：
+   - **Name**：`sentence-agent-backend`（或自定义）
+   - **Root Directory**：`backend`
+   - **Runtime**：`Python`
+   - **Build Command**：`pip install -r requirements.txt`
+   - **Start Command**：`uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+   - **Instance Type**：Free
+
+   > 如果仓库根目录有 `render.yaml`，以上配置会自动填充。
+
+5. 展开 **Environment Variables**，手动添加：
+   ```
+   ALLOWED_ORIGINS = https://your-app.vercel.app
+   ```
+   （`ANALYZER_PROVIDER=mock` 已在 render.yaml 中预设，无需再填）
+
+6. 点击 **Create Web Service**。
+
+7. 部署完成后，Render 会分配一个 `https://your-service.onrender.com` 地址。
+
+8. 将这个地址填入 Vercel 的 `VITE_API_BASE_URL`，重新触发 Vercel 部署。
+
+---
+
+### 方式二：render.yaml 自动部署
+
+仓库根目录已有 `render.yaml`，可使用 Render 的 Blueprint 功能一键创建服务：
+
+1. 打开 [render.com](https://render.com) → **New** → **Blueprint**。
+2. 选择仓库，Render 会自动读取 `render.yaml`。
+3. 手动在 Dashboard 中为 `ALLOWED_ORIGINS` 填写值（`render.yaml` 中标记为 `sync: false`，需手动设置）。
+
+---
+
+### 部署顺序建议
+
+```
+1. 先部署后端到 Render → 拿到后端地址
+2. 再部署前端到 Vercel → 填写后端地址
+3. 再回到 Render → 填写前端地址到 ALLOWED_ORIGINS
+4. 验证：前端发请求 → 后端返回结果
+```
+
+> **注意**：Render Free 套餐在 15 分钟无请求后会休眠，首次访问可能有约 30 秒冷启动延迟。
 
 ---
 
