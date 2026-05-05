@@ -97,6 +97,99 @@ sentence-agent/
 
 ---
 
+## Vercel 部署（前端）
+
+前端是纯静态 Vite 应用，可直接部署到 Vercel。`frontend/vercel.json` 已配置 SPA fallback，无需额外设置。
+
+### Vercel 构建配置
+
+| 项目 | 值 |
+|---|---|
+| Framework Preset | Vite |
+| Root Directory | `frontend` |
+| Build Command | `npm run build` |
+| Output Directory | `dist` |
+| Install Command | `npm install` |
+
+### 必填环境变量
+
+`VITE_API_BASE_URL` 在构建时打入静态包，**必须在 Vercel 构建前设置**，否则前端无法调用后端。
+
+```
+VITE_API_BASE_URL = https://your-backend-domain.com
+```
+
+后端需单独部署，并在 CORS 中允许 Vercel 分配的前端域名。
+
+---
+
+### 方式一：Vercel 网页操作（推荐新手）
+
+1. 将整个仓库推送到 GitHub（`git push`）。
+
+2. 打开 [vercel.com](https://vercel.com) → 登录 → **Add New Project**。
+
+3. 选择你的仓库，点击 **Import**。
+
+4. 在 **Configure Project** 页面修改以下项：
+   - **Root Directory**：点击 Edit，填写 `frontend`
+   - **Framework Preset** 会自动识别为 Vite
+   - **Build Command**：`npm run build`（自动填充）
+   - **Output Directory**：`dist`（自动填充）
+
+5. 展开 **Environment Variables**，添加：
+   ```
+   Name:  VITE_API_BASE_URL
+   Value: https://your-backend-domain.com
+   ```
+
+6. 点击 **Deploy**。
+
+7. 部署完成后，Vercel 会分配一个 `*.vercel.app` 域名，直接访问即可。
+
+8. 后续每次 `git push` 到主分支，Vercel 自动重新部署。
+
+---
+
+### 方式二：Vercel CLI
+
+```bash
+# 1. 安装 CLI（全局）
+npm install -g vercel
+
+# 2. 登录
+vercel login
+
+# 3. 进入前端目录
+cd frontend
+
+# 4. 首次部署（交互式配置）
+vercel
+
+# CLI 会依次询问：
+# ? Set up and deploy? → Y
+# ? Which scope? → 选择你的账号
+# ? Link to existing project? → N（首次）
+# ? Project name → 填写项目名，如 sentence-agent
+# ? In which directory is your code located? → .（当前目录，即 frontend/）
+# ? Want to modify settings? → Y
+#   Build Command: npm run build
+#   Output Directory: dist
+#   Install Command: npm install
+
+# 5. 设置环境变量
+vercel env add VITE_API_BASE_URL production
+# 按提示输入值：https://your-backend-domain.com
+
+# 6. 重新部署（让环境变量生效）
+vercel --prod
+
+# 后续部署
+vercel --prod
+```
+
+---
+
 ## 后续扩展
 
 切换分析器时只需修改 `backend/.env`：
