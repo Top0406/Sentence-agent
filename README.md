@@ -44,7 +44,7 @@ npm run dev
 ANALYZER_PROVIDER=mock
 
 # 允许访问后端的前端域名，逗号分隔（本地开发留空即可）
-ALLOWED_ORIGINS=
+ALLOWED_ORIGINS=https://sentence-agent.vercel.app
 ```
 
 第一阶段不需要任何 API key。
