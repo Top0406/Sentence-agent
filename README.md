@@ -1,8 +1,88 @@
 # 英语句子结构图解器
 
-面向中国英语学习者的 Web 工具，输入英文句子后，以颜色高亮方式展示句子成分。
+面向中国英语学习者的 Web 工具。输入一个英文句子，系统返回结构化分析结果，并以颜色高亮方式展示主语、谓语、宾语、从句等句子成分，同时提供中文解释。
 
-第一阶段使用 Mock Analyzer，不调用任何真实大模型 API。
+---
+
+## 当前阶段：Phase 1 — Mock Analyzer MVP
+
+本阶段目标是验证产品骨架，**不接入任何真实大模型或 NLP API**。
+
+| 验证点 | 状态 |
+|---|---|
+| 前端能把句子发送给后端 | ✅ |
+| 后端能返回结构化 JSON | ✅ |
+| 前端能根据 JSON 颜色高亮成分 | ✅ |
+| UI 清晰可用 | ✅ |
+| 分析器模块便于后续替换 | ✅ |
+
+分析结果由 **Mock Analyzer** 生成：对固定句子 `The boy who won the prize is my brother.` 返回完整结构；对其他输入返回覆盖全句的通用成分并附带说明。这不是真实语法分析，仅用于验证前后端通信和 UI 展示。
+
+---
+
+## 技术栈
+
+### 前端
+
+| 项目 | 版本 |
+|---|---|
+| React | ^19 |
+| Vite | ^8 |
+
+无额外 UI 库，样式全部使用内联 style。
+
+### 后端
+
+| 项目 | 版本 |
+|---|---|
+| Python | 3.11+ 建议 |
+| FastAPI | >=0.111 |
+| Uvicorn | >=0.29 |
+| Pydantic | >=2.7 |
+
+### 部署
+
+| 服务 | 用途 |
+|---|---|
+| Render | 后端（FastAPI） |
+| Vercel | 前端（Vite 静态） |
+
+---
+
+## 项目结构
+
+```
+sentence-agent/
+  SPEC.md                        # 第一阶段需求规格
+  README.md
+  render.yaml                    # Render 后端服务定义
+  .gitignore
+
+  docs/
+    PHASE_1_SUMMARY.md           # 阶段总结
+
+  frontend/
+    vercel.json                  # SPA fallback 规则
+    .env.example
+    src/
+      App.jsx                    # 主布局，状态管理
+      api/client.js              # fetch 封装，统一错误处理
+      components/
+        SentenceInput.jsx        # 输入框 + 前端校验
+        HighlightedSentence.jsx  # 按 components 数组渲染高亮
+        AnalysisResult.jsx       # 完整结果展示
+        Legend.jsx               # 颜色图例
+
+  backend/
+    requirements.txt
+    .env.example
+    app/
+      main.py                    # FastAPI 入口、CORS、路由、错误处理
+      schemas.py                 # Pydantic 请求/响应模型
+      analyzers/
+        base.py                  # BaseAnalyzer 抽象基类（可替换接口）
+        mock_analyzer.py         # Mock 实现
+```
 
 ---
 
@@ -13,13 +93,13 @@
 ```bash
 cd backend
 python3 -m venv .venv
-source .venv/bin/activate
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 cp .env.example .env
 uvicorn app.main:app --reload
 ```
 
-后端默认运行在 http://localhost:8000
+后端运行在 `http://localhost:8000`。可访问 `http://localhost:8000/api/health` 确认正常。
 
 ### 2. 启动前端
 
@@ -32,13 +112,18 @@ cp .env.example .env
 npm run dev
 ```
 
-前端默认运行在 http://localhost:5173
+前端运行在 `http://localhost:5173`。
 
 ---
 
 ## 环境变量
 
-### backend/.env
+### 后端 `backend/.env`
+
+| 变量 | 本地默认 | 说明 |
+|---|---|---|
+| `ANALYZER_PROVIDER` | `mock` | 分析器类型，第一阶段固定为 `mock` |
+| `ALLOWED_ORIGINS` | 空 | 允许跨域的前端地址，逗号分隔；本地开发留空即可，生产环境**必须**填写 Vercel 前端地址 |
 
 ```env
 ANALYZER_PROVIDER=mock
@@ -49,7 +134,11 @@ ALLOWED_ORIGINS=https://sentence-agent.vercel.app
 
 第一阶段不需要任何 API key。
 
-### frontend/.env
+### 前端 `frontend/.env`
+
+| 变量 | 本地默认 | 说明 |
+|---|---|---|
+| `VITE_API_BASE_URL` | `http://localhost:8000` | 后端地址；Vite 构建时打入静态包，生产环境**必须**填写 Render 后端地址 |
 
 ```env
 VITE_API_BASE_URL=http://localhost:8000
@@ -57,147 +146,24 @@ VITE_API_BASE_URL=http://localhost:8000
 
 ---
 
-## 手动测试用例
+## 部署
 
-| 用例 | 预期结果 |
-|---|---|
-| 空输入直接点击分析 | 显示"请输入英文句子" |
-| 输入超过 500 字符 | 显示"句子过长，请缩短后重试" |
-| `The boy who won the prize is my brother.` | 高亮主语（蓝）、谓语（绿）、补语（紫），显示定语从句 |
-| `I love English.` | 通用 mock 结果，带 warning，不崩溃 |
-| `She is a teacher.` | 通用 mock 结果，带 warning，不崩溃 |
-| 后端未启动时提交 | 显示"分析服务暂时不可用，请稍后重试" |
-
----
-
-## 项目结构
+### 部署顺序
 
 ```
-sentence-agent/
-  SPEC.md
-  README.md
-  .gitignore
-  frontend/
-    .env.example
-    src/
-      api/client.js          # fetch 封装
-      components/
-        SentenceInput.jsx    # 输入框 + 校验
-        HighlightedSentence.jsx  # 颜色高亮渲染
-        AnalysisResult.jsx   # 完整结果展示
-        Legend.jsx           # 颜色图例
-      App.jsx
-  backend/
-    .env.example
-    requirements.txt
-    app/
-      main.py               # FastAPI 入口，路由，错误处理
-      schemas.py            # Pydantic 数据模型
-      analyzers/
-        base.py             # 抽象基类（可替换接口）
-        mock_analyzer.py    # Mock 实现
+1. 先部署后端到 Render  →  拿到后端地址（https://xxx.onrender.com）
+2. 再部署前端到 Vercel  →  填写后端地址，拿到前端地址（https://xxx.vercel.app）
+3. 再回到 Render        →  将前端地址填入 ALLOWED_ORIGINS，保存重启
+4. 验证前端发请求 → 后端正常返回
 ```
 
 ---
 
-## Vercel 部署（前端）
+### Render 部署（后端）
 
-前端是纯静态 Vite 应用，可直接部署到 Vercel。`frontend/vercel.json` 已配置 SPA fallback，无需额外设置。
+仓库根目录已有 `render.yaml`，Render 可自动识别。
 
-### Vercel 构建配置
-
-| 项目 | 值 |
-|---|---|
-| Framework Preset | Vite |
-| Root Directory | `frontend` |
-| Build Command | `npm run build` |
-| Output Directory | `dist` |
-| Install Command | `npm install` |
-
-### 必填环境变量
-
-`VITE_API_BASE_URL` 在构建时打入静态包，**必须在 Vercel 构建前设置**，否则前端无法调用后端。
-
-```
-VITE_API_BASE_URL = https://your-backend-domain.com
-```
-
-后端需单独部署，并在 CORS 中允许 Vercel 分配的前端域名。
-
----
-
-### 方式一：Vercel 网页操作（推荐新手）
-
-1. 将整个仓库推送到 GitHub（`git push`）。
-
-2. 打开 [vercel.com](https://vercel.com) → 登录 → **Add New Project**。
-
-3. 选择你的仓库，点击 **Import**。
-
-4. 在 **Configure Project** 页面修改以下项：
-   - **Root Directory**：点击 Edit，填写 `frontend`
-   - **Framework Preset** 会自动识别为 Vite
-   - **Build Command**：`npm run build`（自动填充）
-   - **Output Directory**：`dist`（自动填充）
-
-5. 展开 **Environment Variables**，添加：
-   ```
-   Name:  VITE_API_BASE_URL
-   Value: https://your-backend-domain.com
-   ```
-
-6. 点击 **Deploy**。
-
-7. 部署完成后，Vercel 会分配一个 `*.vercel.app` 域名，直接访问即可。
-
-8. 后续每次 `git push` 到主分支，Vercel 自动重新部署。
-
----
-
-### 方式二：Vercel CLI
-
-```bash
-# 1. 安装 CLI（全局）
-npm install -g vercel
-
-# 2. 登录
-vercel login
-
-# 3. 进入前端目录
-cd frontend
-
-# 4. 首次部署（交互式配置）
-vercel
-
-# CLI 会依次询问：
-# ? Set up and deploy? → Y
-# ? Which scope? → 选择你的账号
-# ? Link to existing project? → N（首次）
-# ? Project name → 填写项目名，如 sentence-agent
-# ? In which directory is your code located? → .（当前目录，即 frontend/）
-# ? Want to modify settings? → Y
-#   Build Command: npm run build
-#   Output Directory: dist
-#   Install Command: npm install
-
-# 5. 设置环境变量
-vercel env add VITE_API_BASE_URL production
-# 按提示输入值：https://your-backend-domain.com
-
-# 6. 重新部署（让环境变量生效）
-vercel --prod
-
-# 后续部署
-vercel --prod
-```
-
----
-
-## Render 部署（后端）
-
-后端是 FastAPI 应用，可部署到 Render Free 套餐。仓库根目录已有 `render.yaml`，Render 会自动识别。
-
-### Render 服务配置
+**Render 服务配置**
 
 | 项目 | 值 |
 |---|---|
@@ -206,78 +172,118 @@ vercel --prod
 | Root Directory | `backend` |
 | Build Command | `pip install -r requirements.txt` |
 | Start Command | `uvicorn app.main:app --host 0.0.0.0 --port $PORT` |
+| Instance Type | Free |
 
-### 环境变量
+**方式一：网页操作**
 
-| 变量 | 值 | 说明 |
-|---|---|---|
-| `ANALYZER_PROVIDER` | `mock` | 已在 render.yaml 中预设 |
-| `ALLOWED_ORIGINS` | `https://your-app.vercel.app` | **必须手动填写**，填 Vercel 前端地址 |
-
----
-
-### 方式一：Render 网页操作（推荐新手）
-
-1. 将整个仓库推送到 GitHub（`git push`）。
-
-2. 打开 [render.com](https://render.com) → 登录 → **New** → **Web Service**。
-
-3. 选择 GitHub 仓库，点击 **Connect**。
-
-4. 填写配置：
-   - **Name**：`sentence-agent-backend`（或自定义）
-   - **Root Directory**：`backend`
-   - **Runtime**：`Python`
-   - **Build Command**：`pip install -r requirements.txt`
-   - **Start Command**：`uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-   - **Instance Type**：Free
-
-   > 如果仓库根目录有 `render.yaml`，以上配置会自动填充。
-
-5. 展开 **Environment Variables**，手动添加：
+1. `git push` 推送代码到 GitHub。
+2. [render.com](https://render.com) → 登录 → **New** → **Web Service**。
+3. 选择仓库 → **Connect**。
+4. 按上表填写配置（如果识别到 `render.yaml` 会自动填充）。
+5. **Environment Variables** 手动添加：
    ```
    ALLOWED_ORIGINS = https://your-app.vercel.app
    ```
-   （`ANALYZER_PROVIDER=mock` 已在 render.yaml 中预设，无需再填）
+   （`ANALYZER_PROVIDER=mock` 已在 `render.yaml` 中预设，无需再填）
+6. 点击 **Create Web Service**，等待部署完成。
+7. 记录分配的地址 `https://your-service.onrender.com`，后续填入 Vercel。
 
-6. 点击 **Create Web Service**。
+**方式二：Blueprint（render.yaml）**
 
-7. 部署完成后，Render 会分配一个 `https://your-service.onrender.com` 地址。
+1. [render.com](https://render.com) → **New** → **Blueprint**。
+2. 选择仓库，Render 自动读取 `render.yaml`。
+3. 在 Dashboard 中手动为 `ALLOWED_ORIGINS` 填写前端地址（`render.yaml` 中标记为 `sync: false`）。
 
-8. 将这个地址填入 Vercel 的 `VITE_API_BASE_URL`，重新触发 Vercel 部署。
-
----
-
-### 方式二：render.yaml 自动部署
-
-仓库根目录已有 `render.yaml`，可使用 Render 的 Blueprint 功能一键创建服务：
-
-1. 打开 [render.com](https://render.com) → **New** → **Blueprint**。
-2. 选择仓库，Render 会自动读取 `render.yaml`。
-3. 手动在 Dashboard 中为 `ALLOWED_ORIGINS` 填写值（`render.yaml` 中标记为 `sync: false`，需手动设置）。
+> **注意**：Render Free 套餐 15 分钟无请求后服务休眠，首次访问有约 30 秒冷启动延迟。
 
 ---
 
-### 部署顺序建议
+### Vercel 部署（前端）
 
-```
-1. 先部署后端到 Render → 拿到后端地址
-2. 再部署前端到 Vercel → 填写后端地址
-3. 再回到 Render → 填写前端地址到 ALLOWED_ORIGINS
-4. 验证：前端发请求 → 后端返回结果
-```
+`frontend/vercel.json` 已配置 SPA fallback，无需额外设置。
 
-> **注意**：Render Free 套餐在 15 分钟无请求后会休眠，首次访问可能有约 30 秒冷启动延迟。
+**Vercel 构建配置**
+
+| 项目 | 值 |
+|---|---|
+| Framework Preset | Vite（自动识别） |
+| Root Directory | `frontend` |
+| Build Command | `npm run build` |
+| Output Directory | `dist` |
+| Install Command | `npm install` |
+
+**方式一：网页操作**
+
+1. `git push` 推送代码到 GitHub。
+2. [vercel.com](https://vercel.com) → 登录 → **Add New Project**。
+3. 选择仓库 → **Import**。
+4. **Configure Project** 页面：
+   - **Root Directory** → 填写 `frontend`（这步容易漏）
+   - Build Command / Output Directory 自动填充
+5. **Environment Variables** 添加：
+   ```
+   VITE_API_BASE_URL = https://your-service.onrender.com
+   ```
+6. 点击 **Deploy**，完成后记录分配的 `*.vercel.app` 地址。
+7. 后续每次 `git push` 主分支，Vercel 自动重新部署。
+
+**方式二：Vercel CLI**
+
+```bash
+npm install -g vercel
+vercel login
+
+cd frontend
+vercel                                        # 首次交互式配置，Root Directory 选 .
+
+vercel env add VITE_API_BASE_URL production   # 输入 Render 后端地址
+vercel --prod                                 # 生产部署
+```
 
 ---
 
-## 后续扩展
+## 测试用例
 
-切换分析器时只需修改 `backend/.env`：
+手动验证以下场景：
 
-```env
-ANALYZER_PROVIDER=deepseek   # 第二阶段
-ANALYZER_PROVIDER=local      # 本地 NLP
-```
+| 输入 / 操作 | 预期结果 |
+|---|---|
+| 空输入直接点击分析 | 前端提示"请输入英文句子"，不发请求 |
+| 输入超过 500 字符 | 前端提示"句子过长，请缩短后重试"，不发请求 |
+| `The boy who won the prize is my brother.` | 高亮主语（蓝）、谓语（绿）、补语（紫），展示定语从句，显示 warning |
+| `I love English.` | 通用 mock 结果，附 2 条 warning，不崩溃 |
+| `She is a teacher.` | 通用 mock 结果，附 2 条 warning，不崩溃 |
+| 后端未启动时提交 | 前端显示"分析服务暂时不可用，请稍后重试" |
 
-前端无需任何改动。
+---
+
+## 当前限制
+
+1. **Mock Analyzer 不是真实语法分析器。** 只有一个固定句子（`The boy who won the prize is my brother.`）有精确的成分拆分结果；其他所有句子返回覆盖全句的通用成分，无实际语法意义。
+2. **不支持真实大模型或 NLP 分析。** 第一阶段不调用 DeepSeek、OpenAI、Claude 或任何本地 NLP 库。
+3. **单句输入，最大 500 字符。** 不支持多句或段落分析。
+4. **无用户系统。** 无登录、无历史记录、无个人设置。
+5. **无数据持久化。** 分析结果仅保存在当前页面内存中，刷新后消失。
+6. **无请求超时处理。** 前端 fetch 未设置超时，网络极慢时用户体验较差。
+7. **Render Free 冷启动。** 15 分钟无请求后服务休眠，首次响应约需 30 秒。
+
+---
+
+## 后续阶段方向
+
+### 第二阶段：接入真实分析器
+
+- 新增 `backend/app/analyzers/deepseek_analyzer.py`，继承 `BaseAnalyzer`
+- 通过环境变量 `ANALYZER_PROVIDER=deepseek` 切换，**前端零改动**
+- 设计 prompt，使模型输出符合现有 JSON schema
+- 对模型返回 JSON 做严格字段校验和 `start/end` 合法性检查
+- 支持备选免费 API 或本地 spaCy/NLTK 作为 `ANALYZER_PROVIDER=local`
+
+### 第三阶段：产品化
+
+- 用户账号与历史记录
+- 数据库持久化（PostgreSQL）
+- 请求频率限制（rate limiting）
+- 前端 fetch 加超时与重试逻辑
+- 升级 Render 套餐或迁移至其他平台消除冷启动
+- 自定义域名绑定
