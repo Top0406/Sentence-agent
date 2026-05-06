@@ -287,6 +287,92 @@ Phase 1 已实现对无效 `start/end` 的降级展示逻辑：当 `start=0, end
 
 ---
 
+## Phase 2.1: Component Span Validation
+
+### 目标
+
+DeepSeek Analyzer 已能返回真实语法分析结果，但模型返回的 `components` 中 `start` 和 `end` 字段有时不可靠：位置数值在句子长度范围内，但 `sentence[start:end]` 与 `component.text` 并不相等。这导致前端用错误的字符区间高亮，在原句中标出错误的文字（"乱高亮"）。
+
+Phase 2.1 的目标：后端在返回 `components` 之前，用 `component.text` 回到 `original_sentence` 中重新验证并修正 `start/end`，保证最终返回的每个有效位置满足 `sentence[start:end] == component.text`。
+
+---
+
+### 实现方式
+
+**唯一修改的文件：`backend/app/analyzers/deepseek_analyzer.py`**
+
+新增私有静态方法 `_resolve_span(sentence, text, model_start, model_end)`，在 `_build_components()` 中对每个 component 调用。
+
+验证与修正逻辑（三步）：
+
+1. **精确位置验证（大小写敏感）**：若 `sentence[model_start:model_end] == text`，则位置正确，直接采用。
+2. **全句搜索（大小写敏感）**：若步骤 1 失败，在整句中搜索 `text` 的所有出现位置：
+   - 唯一匹配：使用该位置。
+   - 多处匹配：选取与模型原始 `model_start` 距离最近的位置；若存在平局（两处距离相等），视为无法可靠定位。
+3. **全句搜索（大小写不敏感）**：若步骤 2 也失败，用同样逻辑做大小写不敏感搜索。
+
+---
+
+### 降级处理（all-or-nothing）
+
+若任意一个 component 经过三步验证仍无法可靠定位（文本不存在于原句、多处匹配且无法选择、文本为空），则：
+
+- 该批次所有 components 的 `start` 和 `end` 全部重置为 `0, 0`；
+- 空文本的 component 直接从列表中删除；
+- 在响应的 `warnings` 数组中追加：`"部分成分位置信息不可靠，已降级展示。"`
+
+前端的 all-or-nothing fallback 行为（任一 component `start >= end` 则整组回退至纯文本）与这一设计配合，确保不会出现部分正确、部分错误的混合高亮状态。
+
+---
+
+### 修改的文件
+
+| 文件 | 改动 |
+|---|---|
+| `backend/app/analyzers/deepseek_analyzer.py` | `_build_components()` 重写：移除旧的手动边界检查，改为调用 `_resolve_span()`；空/纯空白 text 过滤删除；all-or-nothing 重置逻辑 |
+| `backend/app/analyzers/deepseek_analyzer.py` | 新增 `_resolve_span()` 静态方法：三步验证 + 就近选择 + 大小写不敏感回退 |
+
+前端文件、`main.py`、`base.py`、`mock_analyzer.py`、`schemas.py`、`/api/analyze` 路径：**均未修改。**
+
+---
+
+### 测试句子与结果
+
+**触发报告问题的句子：**
+
+```
+Although it was raining heavily, the students who had prepared for the exam continued studying in the library.
+```
+
+**Phase 2.1 修复前（模型返回的错误位置）：**
+
+| component | text | 模型 start | 模型 end | sentence[start:end] |
+|---|---|---|---|---|
+| predicate | `continued` | 6 | 85 | `"gh it was raining heavily, the students who had prepared for the exam continued"` ✗ |
+| object | `studying in the library` | 6 | 109 | `"gh it was raining heavily, the students who had prepared for the exam continued studying in the library"` ✗ |
+
+**Phase 2.1 修复后（本地 DeepSeek 实测）：**
+
+| component | text | 修正后 start | 修正后 end | sentence[start:end] |
+|---|---|---|---|---|
+| clause | `Although it was raining heavily` | 0 | 31 | ✓ |
+| subject | `the students who had prepared for the exam` | 33 | 75 | ✓ |
+| predicate | `continued` | 76 | 85 | ✓ |
+| object | `studying in the library` | 86 | 109 | ✓ |
+
+无 warnings，所有成分可正常高亮。
+
+---
+
+### 当前限制
+
+1. **高亮可靠性提高，但语法分析准确率不保证。** 位置修正只保证 `sentence[start:end] == text`，不保证模型对句子结构的分析本身是正确的（如成分类型判断、从句识别）。
+2. **多处匹配且平局时仍降级。** 若 `component.text` 是原句中频繁出现的短词（如 `"the"`、`"is"`）且出现位置相对模型原始 start 等距，无法自动选择，该批次全部降级为 `(0, 0)`。
+3. **空 text component 直接过滤。** 模型偶尔返回空文本的成分，会被删除并触发降级 warning。
+4. **前端 all-or-nothing 行为。** 只要有一个 component 无法定位，整句所有高亮均回退为纯文本。这是有意的设计（避免混合正确/错误高亮），但用户体验上会损失部分可靠成分的高亮。
+
+---
+
 ## 13. 安全注意事项
 
 以下规则在整个项目生命周期内始终有效：
