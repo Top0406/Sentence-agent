@@ -56,7 +56,7 @@ def _generic_result(sentence: str) -> AnalyzeResponse:
 
 
 class MockAnalyzer(BaseAnalyzer):
-    def analyze(self, sentence: str) -> AnalyzeResponse:
+    async def analyze(self, sentence: str) -> AnalyzeResponse:
         if sentence.strip() == _FIXED_SENTENCE:
             return _FIXED_RESULT
         return _generic_result(sentence)

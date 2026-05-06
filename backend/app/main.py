@@ -7,6 +7,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from app.analyzers.base import AnalyzerError
 from app.schemas import AnalyzeRequest, AnalyzeResponse
 
 load_dotenv()
@@ -17,7 +18,12 @@ def _get_analyzer():
     if provider == "mock":
         from app.analyzers.mock_analyzer import MockAnalyzer
         return MockAnalyzer()
-    raise ValueError(f"Unknown ANALYZER_PROVIDER: {provider}")
+    if provider == "deepseek":
+        from app.analyzers.deepseek_analyzer import DeepSeekAnalyzer
+        return DeepSeekAnalyzer()
+    raise ValueError(
+        f"不支持的 ANALYZER_PROVIDER 值: '{provider}'，仅支持 mock 或 deepseek"
+    )
 
 
 analyzer = None
@@ -31,6 +37,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="英语句子结构图解器 API", lifespan=lifespan)
+
 
 def _get_allowed_origins() -> list[str]:
     raw = os.getenv("ALLOWED_ORIGINS", "")
@@ -53,8 +60,13 @@ def health():
 
 
 @app.post("/api/analyze", response_model=AnalyzeResponse)
-def analyze(request: AnalyzeRequest):
-    return analyzer.analyze(request.sentence)
+async def analyze(request: AnalyzeRequest):
+    return await analyzer.analyze(request.sentence)
+
+
+@app.exception_handler(AnalyzerError)
+async def analyzer_error_handler(request: Request, exc: AnalyzerError):
+    return JSONResponse(status_code=exc.status_code, content={"error": exc.message})
 
 
 @app.exception_handler(RequestValidationError)
