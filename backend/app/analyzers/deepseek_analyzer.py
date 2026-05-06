@@ -154,40 +154,87 @@ class DeepSeekAnalyzer(BaseAnalyzer):
     def _build_components(
         self, sentence: str, raw: list
     ) -> tuple[list[Component], bool]:
-        components = []
-        has_bad_positions = False
-        sent_len = len(sentence)
+        resolved = []
+        has_unreliable = False
 
         for item in raw:
             if not isinstance(item, dict):
                 continue
+
+            c_text = str(item.get("text", ""))
+            if not c_text.strip():
+                has_unreliable = True
+                continue
+
             try:
-                c_start = int(item.get("start", 0))
-                c_end = int(item.get("end", 0))
+                model_start = int(item.get("start", 0))
+                model_end = int(item.get("end", 0))
             except (ValueError, TypeError):
-                c_start, c_end = 0, 0
-                has_bad_positions = True
+                model_start, model_end = 0, 0
 
-            if (
-                c_start < 0
-                or c_end < 0
-                or c_start > sent_len
-                or c_end > sent_len
-                or c_start >= c_end
-            ):
-                c_start, c_end = 0, 0
-                has_bad_positions = True
+            c_start, c_end, verified = self._resolve_span(
+                sentence, c_text, model_start, model_end
+            )
+            if not verified:
+                has_unreliable = True
 
-            components.append(
+            resolved.append(
                 Component(
                     type=str(item.get("type", "")),
-                    text=str(item.get("text", "")),
+                    text=c_text,
                     start=c_start,
                     end=c_end,
                 )
             )
 
-        return components, has_bad_positions
+        if has_unreliable:
+            resolved = [
+                Component(type=c.type, text=c.text, start=0, end=0)
+                for c in resolved
+            ]
+
+        return resolved, has_unreliable
+
+    @staticmethod
+    def _resolve_span(
+        sentence: str, text: str, model_start: int, model_end: int
+    ) -> tuple[int, int, bool]:
+        t_len = len(text)
+        n = len(sentence)
+
+        # Step 1: exact match at model's reported position (case-sensitive)
+        if 0 <= model_start < model_end <= n and sentence[model_start:model_end] == text:
+            return model_start, model_end, True
+
+        def _find_all(haystack: str, needle: str) -> list[int]:
+            result, start = [], 0
+            while (idx := haystack.find(needle, start)) != -1:
+                result.append(idx)
+                start = idx + 1
+            return result
+
+        def _pick_best(positions: list[int]) -> int | None:
+            if not positions:
+                return None
+            if len(positions) == 1:
+                return positions[0]
+            nearest = min(positions, key=lambda p: abs(p - model_start))
+            # Reject ties: two positions equally close to model_start
+            if sum(1 for p in positions if abs(p - model_start) == abs(nearest - model_start)) == 1:
+                return nearest
+            return None
+
+        # Step 2: case-sensitive search across full sentence
+        pos = _pick_best(_find_all(sentence, text))
+        if pos is not None:
+            return pos, pos + t_len, True
+
+        # Step 3: case-insensitive search
+        pos_ci = _pick_best(_find_all(sentence.lower(), text.lower()))
+        if pos_ci is not None:
+            return pos_ci, pos_ci + t_len, True
+
+        return 0, 0, False
 
     def _build_clauses(self, raw: list) -> list[Clause]:
         clauses = []
