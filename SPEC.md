@@ -13,10 +13,10 @@
 当前阶段：
 
 ```text
-Phase 2 — DeepSeek Analyzer Integration
+Phase 2.2 — 分析质量优化
 ```
 
-当前阶段目标是在 Phase 1 已完成的 Mock Analyzer MVP 基础上，新增 DeepSeek Analyzer，使后端能够在保留 Mock Analyzer 的同时，通过环境变量切换到真实大模型分析器。
+Phase 2（DeepSeek Analyzer Integration）已完成并上线。当前阶段目标是建立测试集、优化 prompt，提升分析质量和输出稳定性，不新增产品功能。
 
 ---
 
@@ -27,7 +27,8 @@ Phase 2 — DeepSeek Analyzer Integration
 ```text
 docs/PHASE_1_SPEC.md
 docs/PHASE_1_SUMMARY.md
-docs/PHASE_2_SPEC_STRICT.md
+docs/PHASE_2_SPEC.md
+docs/PHASE_2_SUMMARY.md
 ```
 
 文档说明：
@@ -36,7 +37,8 @@ docs/PHASE_2_SPEC_STRICT.md
 |---|---|
 | `docs/PHASE_1_SPEC.md` | 第一阶段原始需求与验收标准 |
 | `docs/PHASE_1_SUMMARY.md` | 第一阶段完成情况、部署情况和限制 |
-| `docs/PHASE_2_SPEC_STRICT.md` | 第二阶段严格需求、限制、验收标准和待用户确认项 |
+| `docs/PHASE_2_SPEC.md` | 第二阶段严格需求、限制、验收标准 |
+| `docs/PHASE_2_SUMMARY.md` | 第二阶段完成情况（含 Phase 2.1、Phase 2.2 进展） |
 
 ---
 

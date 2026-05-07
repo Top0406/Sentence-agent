@@ -2,13 +2,14 @@ import os
 from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Query, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.analyzers.base import AnalyzerError
-from app.schemas import AnalyzeRequest, AnalyzeResponse
+from app.database import get_history, init_db, save_analysis
+from app.schemas import AnalyzeRequest, AnalyzeResponse, HistoryItem
 
 load_dotenv()
 
@@ -27,12 +28,15 @@ def _get_analyzer():
 
 
 analyzer = None
+_db_path: str = ""
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global analyzer
+    global analyzer, _db_path
     analyzer = _get_analyzer()
+    _db_path = os.getenv("HISTORY_DB_PATH", "history.db")
+    await init_db(_db_path)
     yield
 
 
@@ -61,7 +65,26 @@ def health():
 
 @app.post("/api/analyze", response_model=AnalyzeResponse)
 async def analyze(request: AnalyzeRequest):
-    return await analyzer.analyze(request.sentence)
+    result = await analyzer.analyze(request.sentence)
+    try:
+        await save_analysis(request.sentence, result.model_dump_json(), db_path=_db_path)
+    except Exception:
+        pass
+    return result
+
+
+@app.get("/api/history", response_model=list[HistoryItem])
+async def history(limit: int = Query(default=20, ge=1, le=200)):
+    records = await get_history(limit=limit, db_path=_db_path)
+    return [
+        HistoryItem(
+            id=r["id"],
+            sentence=r["sentence"],
+            result=AnalyzeResponse.model_validate_json(r["result_json"]),
+            created_at=r["created_at"],
+        )
+        for r in records
+    ]
 
 
 @app.exception_handler(AnalyzerError)

@@ -1,10 +1,17 @@
-import { useState } from "react";
+import { useState, forwardRef, useImperativeHandle } from "react";
 
 const MAX_LENGTH = 500;
 
-export default function SentenceInput({ onAnalyze, loading }) {
+const SentenceInput = forwardRef(function SentenceInput({ onAnalyze, loading }, ref) {
   const [text, setText] = useState("");
   const [error, setError] = useState("");
+
+  useImperativeHandle(ref, () => ({
+    setValue(sentence) {
+      setText(sentence);
+      setError("");
+    },
+  }));
 
   function handleSubmit(e) {
     e.preventDefault();
@@ -47,7 +54,9 @@ export default function SentenceInput({ onAnalyze, loading }) {
       {error && <p style={styles.error}>{error}</p>}
     </form>
   );
-}
+});
+
+export default SentenceInput;
 
 const styles = {
   form: {

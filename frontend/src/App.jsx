@@ -1,12 +1,19 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import SentenceInput from "./components/SentenceInput";
 import AnalysisResult from "./components/AnalysisResult";
-import { analyzeSentence } from "./api/client";
+import HistoryPanel from "./components/HistoryPanel";
+import { analyzeSentence, fetchHistory } from "./api/client";
 
 export default function App() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
+  const [history, setHistory] = useState([]);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    fetchHistory().then(setHistory).catch(() => {});
+  }, []);
 
   async function handleAnalyze(sentence) {
     setLoading(true);
@@ -19,10 +26,19 @@ export default function App() {
         return;
       }
       setResult(data);
+      fetchHistory().then(setHistory).catch(() => {});
     } catch (err) {
       setError(err.message || "分析服务暂时不可用，请稍后重试");
     } finally {
       setLoading(false);
+    }
+  }
+
+  function handleHistorySelect(item) {
+    setResult(item.result);
+    setError("");
+    if (inputRef.current) {
+      inputRef.current.setValue(item.sentence);
     }
   }
 
@@ -35,7 +51,7 @@ export default function App() {
 
       <main style={styles.main}>
         <div style={styles.inputCard}>
-          <SentenceInput onAnalyze={handleAnalyze} loading={loading} />
+          <SentenceInput onAnalyze={handleAnalyze} loading={loading} ref={inputRef} />
         </div>
 
         {error && (
@@ -43,6 +59,8 @@ export default function App() {
             <p style={styles.errorText}>{error}</p>
           </div>
         )}
+
+        <HistoryPanel items={history} onSelect={handleHistorySelect} />
 
         {result && <AnalysisResult result={result} />}
       </main>

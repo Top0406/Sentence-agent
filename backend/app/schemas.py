@@ -1,5 +1,5 @@
 from pydantic import BaseModel, field_validator
-from typing import Optional
+from typing import Optional, Any
 
 
 class AnalyzeRequest(BaseModel):
@@ -43,3 +43,10 @@ class AnalyzeResponse(BaseModel):
     clauses: list[Clause]
     explanation_zh: str
     warnings: list[str]
+
+
+class HistoryItem(BaseModel):
+    id: int
+    sentence: str
+    result: AnalyzeResponse
+    created_at: str

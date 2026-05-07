@@ -15,3 +15,9 @@ export async function analyzeSentence(sentence) {
 
   return data;
 }
+
+export async function fetchHistory(limit = 20) {
+  const res = await fetch(`${BASE_URL}/api/history?limit=${limit}`);
+  if (!res.ok) return [];
+  return res.json();
+}

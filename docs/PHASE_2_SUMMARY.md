@@ -388,3 +388,159 @@ Although it was raining heavily, the students who had prepared for the exam cont
 4. 后端日志和错误响应不得包含完整 API key，错误信息只暴露错误类型（如 `"DeepSeek API key 未配置"`）。
 5. 前端不得直接请求 DeepSeek API，所有模型调用只能经过后端。
 6. 如果 API key 不慎泄漏到 GitHub，应立即在 DeepSeek 控制台吊销该 key 并生成新 key。
+
+---
+
+## Phase 2.2：分析质量优化
+
+### 目标
+
+在 Phase 2.1 解决"乱高亮"问题的基础上，Phase 2.2 专注于提升分析质量和输出稳定性：
+
+1. 建立测试集（41 个代表性句子），覆盖 9 种句型。
+2. 建立标准化测试结果记录格式。
+3. 分析当前 `_SYSTEM_PROMPT` 的已知问题并优化。
+
+本阶段不新增产品功能，不修改 analyzer 核心逻辑（`analyze`、`_validate_and_build`、`_build_components`、`_resolve_span`）。
+
+---
+
+### 当前 Prompt 问题分析
+
+通过代码审查和 Phase 2 已知测试结果，识别出以下主要问题：
+
+| 问题 | 描述 | 严重程度 |
+|---|---|---|
+| `explanation_zh` 冗长 | 无长度约束，模型倾向于逐一解释每个成分，输出 4–6 句话 | 中 |
+| `warnings` 语义模糊 | 原 prompt 未明确使用场景，模型可能将语法建议、风格意见放入 warnings | 中 |
+| 对有错句子过度介入 | 无"不要改写原句"明确说明，模型可能在 explanation 中提供修改建议 | 中 |
+| `clause` 类型使用不一致 | 名词性从句应在 components 中标为 subject/object，模型有时统一标为 clause | 低 |
+| 正确句子触发多余 warning | 原 prompt "如果不确定则在 warnings 中说明"过于宽泛，正确句子可能出现不必要警告 | 低 |
+| `translation_zh` 可能被修正 | 原 prompt 未说明有语法错误的句子应按字面翻译，模型可能翻译修正后的版本 | 低 |
+
+---
+
+### Prompt 调整内容
+
+**修改文件**：`backend/app/analyzers/deepseek_analyzer.py`，只改 `_SYSTEM_PROMPT`，不修改 analyzer 核心逻辑。
+
+**主要改动**：
+
+1. **角色定义**：从"专业英语语法分析助手"改为"英语句子结构分析助手"，更强调结构分析而非纠错功能。
+
+2. **`explanation_zh` 长度约束**：明确要求"2–3 句话，说明主句骨架和从句关系，不要逐一复述每个成分的内容"。
+
+3. **`warnings` 规则重写**：
+   - 明确列出 warnings 的合法使用场景（3 种：成分分类不确定、start/end 无法确定、结构过于复杂）
+   - 明确列出 warnings 不应包含的内容（语法错误、改写建议、风格意见）
+   - 新增："如果句子语法正确且结构清晰，warnings 必须为空数组 []"
+
+4. **处理有语法错误的句子**：新增专门规则
+   - `text` 必须是原句原始文字，不得修改或替换
+   - `explanation_zh` 只描述结构，不建议改写
+   - 如语法错误严重影响结构识别，可在 `explanation_zh` 最后一句简短说明
+
+5. **成分类型说明**：新增各类型使用边界，特别是 `clause`（仅用于状语从句；名词性从句改用 subject/object）
+
+6. **`translation_zh`**：明确"有语法错误也按字面翻译，不翻译修正后的版本"
+
+---
+
+### 测试集
+
+新建文件 `tests/test_sentences.md`，共 41 个测试句：
+
+| 类型 | 数量 | 句子范围 |
+|---|---|---|
+| 简单句 | 5 | T01–T05 |
+| 含常见从句的复杂句 | 6 | T06–T11 |
+| 长句和多层嵌套 | 5 | T12–T16 |
+| 非母语/表达不自然 | 4 | T17–T20 |
+| 有明显语法错误 | 5 | T21–T25 |
+| 用词问题 | 4 | T26–T29 |
+| 含义不清/歧义 | 4 | T30–T33 |
+| 语法正确但可优化 | 4 | T34–T37 |
+| 多处错误但不应过度改写 | 4 | T38–T41 |
+
+---
+
+### 测试结果记录
+
+新建文件 `tests/test_results.md`，包含标准化记录表格（待用户实际测试后填写）。
+
+记录字段：输出是否合理（Y/P/N）、分类问题、高亮问题、解释是否过长、是否过度修改、备注。
+
+---
+
+### 如何运行测试
+
+```bash
+cd backend
+source .venv/bin/activate
+# 确认 .env 中 ANALYZER_PROVIDER=deepseek 且 DEEPSEEK_API_KEY 已填写
+uvicorn app.main:app --reload
+```
+
+对每个测试句发送请求：
+
+```bash
+curl -X POST http://localhost:8000/api/analyze \
+  -H "Content-Type: application/json" \
+  -d '{"sentence": "I love English."}'
+```
+
+将输出结果与 `tests/test_sentences.md` 中对应句子的预期关注点对比，填入 `tests/test_results.md`。
+
+---
+
+### 实际测试结果（共 11 句）
+
+分三轮完成，测试句覆盖简单句、常见从句、超长嵌套句、语法错误句、多处错误句：
+
+| 轮次 | 测试句 | 结果 |
+|---|---|---|
+| 第一轮 | T01, T16, T21, T32, T38 | T01/T16/T21=Y，T32=P，T38=P |
+| Prompt 调整 | 针对 T32（名词性宾语从句分类）和 T38（修改建议位置、translation_zh）做两处小改 | — |
+| 第二轮 | T02, T06, T08, T25 | 全部 Y |
+| 第三轮 | T07, T09, T10 | 全部 Y |
+
+完整记录见 `tests/test_results.md`。
+
+---
+
+### 当前状态（Phase 2.2 初版完成）
+
+- [x] Prompt 优化完成（含两轮小幅调整）
+- [x] 测试集（41 句）建立完成（`tests/test_sentences.md`）
+- [x] 测试结果记录格式建立完成（`tests/test_results.md`）
+- [x] 实际 DeepSeek API 测试：11 句已测，9 句完全合理，2 句有已知小问题
+- [x] 根据测试结果完成二轮 prompt 调整
+
+剩余 30 句（T03–T05、T11–T15、T17–T20、T22–T24、T26–T31、T33–T41）待后续按需补测。
+
+---
+
+### Known Issues（不继续深挖，记录存档）
+
+| # | 问题 | 涉及句子 | 严重程度 |
+|---|---|---|---|
+| KI-1 | that 宾语从句接在双宾语结构后（told Paul that...），components 仍标为 type=clause 而非 type=object | T32 | 低：不影响从句识别，clauses 数组正确 |
+| KI-2 | 代词指代歧义（he/she 指代不清）未在 explanation 或 warnings 中主动提及 | T32 | 低：歧义识别属语义分析，超出当前 prompt 可靠控制范围 |
+| KI-3 | 有语法错误的句子，修改建议有时出现在 explanation_zh 第一句而非最后一句 | T38 | 低：信息仍在 explanation_zh 内，未进入 text 或 warnings |
+| KI-4 | 超长嵌套句（T16 级别）explanation_zh 可能超过 3 句（实测 4 句） | T16 | 低：复杂度高时可接受 |
+
+---
+
+### 后续 Phase 2.3 或 Phase 3 MVP 建议
+
+**Phase 2.3 方向（如需继续优化分析质量）：**
+- 补测剩余 30 句，重点关注类型四（非母语表达）、类型七（歧义句）、类型九（多处错误句）
+- 针对 KI-2 歧义句，考虑在 warnings 中补充提示（需权衡：过多警告会降低简单句的体验）
+- 评估是否需要对 T16 类超长句单独处理（如 explanation 长度上限放宽或分段）
+
+**Phase 3 MVP 方向（产品化）：**
+- 用户账号与历史记录
+- 数据库持久化（PostgreSQL）
+- 请求频率限制（rate limiting）
+- 前端 fetch 加超时与重试逻辑
+- 冷启动预热或升级 Render 套餐
