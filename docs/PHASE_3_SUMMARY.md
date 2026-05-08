@@ -176,6 +176,39 @@ python -m pytest tests/ -v
 
 ---
 
+## 11. Phase 3.3 完成情况
+
+Phase 3.3 目标：整体 UI/UX polish，不加新功能，让页面更像正式产品。
+
+### 已完成
+
+| 功能 | 状态 |
+|---|---|
+| textarea focus 时 border 变蓝，`transition` 平滑过渡 | ✅ |
+| button hover 变深蓝；loading 时 `opacity: 0.6, cursor: not-allowed` | ✅ |
+| 字数计数器 >450 变橙、>490 变红 | ✅ |
+| 布局顺序改为 input → error → result → HistoryPanel（结果先于历史） | ✅ |
+| loading 中在 result 区显示"正在分析，请稍候…"占位卡片 | ✅ |
+| AnalysisResult section title 去掉 uppercase，改为左侧细线视觉区隔 | ✅ |
+| AnalysisResult 卡片间距 12 → 16px | ✅ |
+| HighlightedSentence mark padding `1px 2px` → `2px 5px`，高亮词更易读 | ✅ |
+| 前端 `npm run build` 无报错（23 个模块） | ✅ |
+
+### 修改文件
+
+| 文件 | 修改内容 |
+|---|---|
+| `frontend/src/components/SentenceInput.jsx` | focus ring、button hover/disabled、字数警告色 |
+| `frontend/src/App.jsx` | 布局顺序调整、loading 占位卡片 |
+| `frontend/src/components/AnalysisResult.jsx` | section title 样式、卡片间距 |
+| `frontend/src/components/HighlightedSentence.jsx` | mark padding 加宽 |
+
+### 未改文件
+
+`HistoryPanel.jsx`、`Legend.jsx`、`client.js`、`localHistory.js`、所有后端文件。
+
+---
+
 ## 10. Phase 3.2 完成情况
 
 Phase 3.2 目标：前端历史记录改为 browser-local localStorage，每个浏览器独立保存，不依赖后端。

@@ -22,8 +22,8 @@ export default function HighlightedSentence({ sentence, components }) {
             title={COLOR_MAP[seg.type]?.label || seg.type}
             style={{
               background: COLOR_MAP[seg.type]?.bg || "#f3f4f6",
-              borderRadius: 3,
-              padding: "1px 2px",
+              borderRadius: 4,
+              padding: "2px 5px",
               fontWeight: seg.type === "predicate" ? 600 : 400,
             }}
           >

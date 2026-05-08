@@ -5,6 +5,8 @@ const MAX_LENGTH = 500;
 const SentenceInput = forwardRef(function SentenceInput({ onAnalyze, loading }, ref) {
   const [text, setText] = useState("");
   const [error, setError] = useState("");
+  const [focused, setFocused] = useState(false);
+  const [btnHovered, setBtnHovered] = useState(false);
 
   useImperativeHandle(ref, () => ({
     setValue(sentence) {
@@ -37,17 +39,33 @@ const SentenceInput = forwardRef(function SentenceInput({ onAnalyze, loading }, 
       <textarea
         value={text}
         onChange={handleChange}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
         placeholder="请输入英文句子，例如：The boy who won the prize is my brother."
-        style={styles.textarea}
+        style={{ ...styles.textarea, borderColor: focused ? "#2563eb" : "#d1d5db" }}
         disabled={loading}
         rows={3}
         maxLength={520}
       />
       <div style={styles.row}>
-        <span style={styles.counter}>
+        <span style={{
+          ...styles.counter,
+          color: text.length > 490 ? "#dc2626" : text.length > 450 ? "#d97706" : "#9ca3af",
+        }}>
           {text.length} / {MAX_LENGTH}
         </span>
-        <button type="submit" disabled={loading} style={styles.button}>
+        <button
+          type="submit"
+          disabled={loading}
+          onMouseEnter={() => setBtnHovered(true)}
+          onMouseLeave={() => setBtnHovered(false)}
+          style={{
+            ...styles.button,
+            background: loading ? "#2563eb" : btnHovered ? "#1d4ed8" : "#2563eb",
+            opacity: loading ? 0.6 : 1,
+            cursor: loading ? "not-allowed" : "pointer",
+          }}
+        >
           {loading ? "分析中…" : "分析"}
         </button>
       </div>
@@ -75,6 +93,7 @@ const styles = {
     lineHeight: 1.5,
     boxSizing: "border-box",
     outline: "none",
+    transition: "border-color 0.15s",
   },
   row: {
     display: "flex",
@@ -92,8 +111,8 @@ const styles = {
     border: "none",
     borderRadius: 6,
     fontSize: 15,
-    cursor: "pointer",
     fontWeight: 500,
+    transition: "background 0.15s, opacity 0.15s",
   },
   error: {
     margin: 0,

@@ -57,9 +57,15 @@ export default function App() {
           </div>
         )}
 
-        <HistoryPanel items={history} onSelect={handleHistorySelect} />
+        {loading && !result && (
+          <div style={styles.loadingBox}>
+            <p style={styles.loadingText}>正在分析，请稍候…</p>
+          </div>
+        )}
 
         {result && <AnalysisResult result={result} />}
+
+        <HistoryPanel items={history} onSelect={handleHistorySelect} />
       </main>
     </div>
   );
@@ -112,5 +118,17 @@ const styles = {
     margin: 0,
     color: "#dc2626",
     fontSize: 14,
+  },
+  loadingBox: {
+    background: "#fff",
+    border: "1px solid #e5e7eb",
+    borderRadius: 8,
+    padding: "24px 16px",
+    textAlign: "center",
+  },
+  loadingText: {
+    margin: 0,
+    fontSize: 14,
+    color: "#9ca3af",
   },
 };

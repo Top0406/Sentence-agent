@@ -127,7 +127,7 @@ const styles = {
   container: {
     display: "flex",
     flexDirection: "column",
-    gap: 12,
+    gap: 16,
   },
   card: {
     background: "#fff",
@@ -139,9 +139,9 @@ const styles = {
     margin: "0 0 10px 0",
     fontSize: 13,
     fontWeight: 600,
-    color: "#6b7280",
-    textTransform: "uppercase",
-    letterSpacing: "0.05em",
+    color: "#374151",
+    borderLeft: "3px solid #d1d5db",
+    paddingLeft: 8,
   },
   structureGrid: {
     display: "flex",
