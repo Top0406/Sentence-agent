@@ -25,7 +25,10 @@ export default function App() {
       setResult(data);
       setHistory(saveToLocalHistory(sentence, data));
     } catch(err) {
-      setError(err.message || "分析服务暂时不可用，请稍后重试");
+      const msg = err.message === "Failed to fetch"
+        ? "无法连接到分析服务，请检查网络后重试"
+        : err.message || "分析服务暂时不可用，请稍后重试";
+      setError(msg);
     } finally {
       setLoading(false);
     }

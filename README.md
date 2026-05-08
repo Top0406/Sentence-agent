@@ -4,9 +4,7 @@
 
 ---
 
-## 当前阶段：Phase 3.3 — UI/UX Polish（已完成）
-
-整体界面交互优化，不加新功能。
+## 当前阶段：Phase 3 已完成 ✅ — 下一步 Phase 4（待规划）
 
 | 功能 | 状态 |
 |---|---|
@@ -20,6 +18,7 @@
 | Browser-local localStorage 历史（每浏览器独立） | ✅ Phase 3.2 |
 | 输入框 focus ring、按钮交互状态、字数警告色 | ✅ Phase 3.3 |
 | loading 占位、布局调整（result 先于 history） | ✅ Phase 3.3 |
+| Bug fix：main_structure null guard / 网络错误中文化 | ✅ Phase 3.4 |
 
 ---
 
@@ -259,7 +258,8 @@ VITE_API_BASE_URL=https://your-service.onrender.com
 | Phase 3.1 | History UI polish（加载态、空状态文案、折叠展示） | ✅ 完成 |
 | Phase 3.2 | Browser-local localStorage history | ✅ 完成 |
 | Phase 3.3 | UI/UX polish（交互状态、布局、高亮可读性） | ✅ 完成 |
-| Phase 4 | 用户登录 + user-scoped history | 待规划 |
+| Phase 3.4 | Final QA / Bug Sweep | ✅ 完成 |
+| Phase 4 | 待规划（需先创建 PHASE_4_SPEC.md） | 未开始 |
 
 ---
 

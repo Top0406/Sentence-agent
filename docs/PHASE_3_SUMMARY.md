@@ -176,6 +176,46 @@ python -m pytest tests/ -v
 
 ---
 
+## 12. Phase 3.4 完成情况（Final QA / Bug Sweep）
+
+Phase 3.4 目标：进入 Phase 4 前的轻量验收，只修小 bug，不加新功能。
+
+### QA 检查结果
+
+| 检查项 | 结论 |
+|---|---|
+| 空输入拦截 | ✅ 正常 |
+| 超过 500 字拦截 | ✅ 正常 |
+| analyze loading 状态 | ✅ 正常 |
+| 非 JSON 错误响应 | ✅ 正常（Phase 3.3.5 已修） |
+| localStorage 为空/损坏 | ✅ 双重防御，返回 `[]` |
+| 刷新后 history 保留 | ✅ 正常 |
+| 点击 history 恢复结果，不重新请求 | ✅ 正常 |
+| 无痕窗口 history 为空 | ✅ 浏览器隔离，正常 |
+| 移动端布局 | ✅ 无明显溢出或断行问题 |
+
+### 修复的 Bug
+
+| Bug | 修复方式 |
+|---|---|
+| `AnalysisResult.jsx`：`main_structure` 缺失时访问 `.subject` 导致 crash | 将主句结构 section 整体用 `main_structure &&` 包裹，字段缺失时静默跳过 |
+| `App.jsx`：网络错误直接显示 `"Failed to fetch"` 英文报错 | catch 块中检测 `"Failed to fetch"`，替换为"无法连接到分析服务，请检查网络后重试" |
+
+### 修改文件
+
+| 文件 | 修改内容 |
+|---|---|
+| `frontend/src/components/AnalysisResult.jsx` | `main_structure &&` guard |
+| `frontend/src/App.jsx` | "Failed to fetch" → 中文友好提示 |
+
+### 构建结果
+
+```
+✓ 23 modules transformed — built in 77ms，无报错
+```
+
+---
+
 ## 11. Phase 3.3 完成情况
 
 Phase 3.3 目标：整体 UI/UX polish，不加新功能，让页面更像正式产品。

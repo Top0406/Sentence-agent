@@ -25,24 +25,26 @@ export default function AnalysisResult({ result }) {
       </section>
 
       {/* Main structure */}
-      <section style={styles.card}>
-        <h3 style={styles.sectionTitle}>主句结构</h3>
-        <div style={styles.structureGrid}>
-          {main_structure.subject && (
-            <StructureItem label="主语 S" text={main_structure.subject} type="subject" />
-          )}
-          {main_structure.predicate && (
-            <StructureItem label="谓语 V" text={main_structure.predicate} type="predicate" />
-          )}
-          {main_structure.object_or_complement && (
-            <StructureItem
-              label="宾/表语 O/C"
-              text={main_structure.object_or_complement}
-              type="complement"
-            />
-          )}
-        </div>
-      </section>
+      {main_structure && (
+        <section style={styles.card}>
+          <h3 style={styles.sectionTitle}>主句结构</h3>
+          <div style={styles.structureGrid}>
+            {main_structure.subject && (
+              <StructureItem label="主语 S" text={main_structure.subject} type="subject" />
+            )}
+            {main_structure.predicate && (
+              <StructureItem label="谓语 V" text={main_structure.predicate} type="predicate" />
+            )}
+            {main_structure.object_or_complement && (
+              <StructureItem
+                label="宾/表语 O/C"
+                text={main_structure.object_or_complement}
+                type="complement"
+              />
+            )}
+          </div>
+        </section>
+      )}
 
       {/* Components list */}
       <section style={styles.card}>
