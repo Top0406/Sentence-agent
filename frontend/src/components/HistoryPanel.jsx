@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+const COLLAPSED_LIMIT = 5;
+
 function HistoryItem({ item, onSelect }) {
   const [hovered, setHovered] = useState(false);
   return (
@@ -19,23 +21,42 @@ function HistoryItem({ item, onSelect }) {
   );
 }
 
-export default function HistoryPanel({ items, onSelect }) {
-  if (!items || items.length === 0) {
+export default function HistoryPanel({ items, onSelect, loading }) {
+  const [expanded, setExpanded] = useState(false);
+
+  if (loading) {
     return (
       <div style={styles.card}>
-        <p style={styles.emptyText}>暂无历史记录</p>
+        <p style={styles.emptyText}>加载中…</p>
       </div>
     );
   }
+
+  if (!items || items.length === 0) {
+    return (
+      <div style={styles.card}>
+        <p style={styles.emptyText}>分析句子后，记录会出现在这里</p>
+      </div>
+    );
+  }
+
+  const hasMore = items.length > COLLAPSED_LIMIT;
+  const visible = hasMore && !expanded ? items.slice(0, COLLAPSED_LIMIT) : items;
+  const hiddenCount = items.length - COLLAPSED_LIMIT;
 
   return (
     <div style={styles.card}>
       <h2 style={styles.heading}>最近分析</h2>
       <ul style={styles.list}>
-        {items.map((item) => (
+        {visible.map((item) => (
           <HistoryItem key={item.id} item={item} onSelect={onSelect} />
         ))}
       </ul>
+      {hasMore && (
+        <button style={styles.toggleBtn} onClick={() => setExpanded((v) => !v)}>
+          {expanded ? "收起" : `查看更多（+${hiddenCount} 条）`}
+        </button>
+      )}
     </div>
   );
 }
@@ -102,5 +123,16 @@ const styles = {
     color: "#9ca3af",
     textAlign: "center",
     padding: "8px 0",
+  },
+  toggleBtn: {
+    marginTop: 8,
+    padding: "4px 0",
+    background: "none",
+    border: "none",
+    color: "#6b7280",
+    fontSize: 12,
+    cursor: "pointer",
+    width: "100%",
+    textAlign: "center",
   },
 };

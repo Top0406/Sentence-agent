@@ -4,9 +4,9 @@
 
 ---
 
-## 当前阶段：Phase 3 MVP — 历史记录
+## 当前阶段：Phase 3.1 — History UI Polish（已完成）
 
-在 Phase 2 DeepSeek Analyzer 已上线的基础上，新增了历史记录功能：每次分析自动保存，用户可在 HistoryPanel 中查看最近分析记录，点击后恢复原句和分析结果。
+在 Phase 3 历史记录 MVP 基础上，完成了 UI 稳定性小优化。
 
 | 功能 | 状态 |
 |---|---|
@@ -14,8 +14,10 @@
 | 颜色高亮展示句子成分 | ✅ |
 | 中文解释与翻译 | ✅ |
 | Mock / DeepSeek 分析器切换 | ✅ |
-| 分析历史记录（HistoryPanel） | ✅ Phase 3 新增 |
-| 点击历史恢复原句和结果 | ✅ Phase 3 新增 |
+| 分析历史记录（HistoryPanel） | ✅ Phase 3 |
+| 点击历史恢复原句和结果 | ✅ Phase 3 |
+| 历史加载状态显示 | ✅ Phase 3.1 |
+| 历史默认显示 5 条，可展开/收起 | ✅ Phase 3.1 |
 
 ---
 
@@ -252,7 +254,7 @@ VITE_API_BASE_URL=https://your-service.onrender.com
 | Phase 1 | Mock Analyzer MVP，前后端基础架构，Render + Vercel 部署 | ✅ 完成 |
 | Phase 2 | DeepSeek Analyzer 接入，start/end 修复，分析质量优化 | ✅ 完成 |
 | Phase 3 MVP | 历史记录功能，SQLite，HistoryPanel，点击恢复 | ✅ 完成 |
-| Phase 3.1 | History stability check + UI polish | 下一步 |
+| Phase 3.1 | History UI polish（加载态、空状态文案、折叠展示） | ✅ 完成 |
 | Phase 4 | 用户登录 + user-scoped history | 待规划 |
 
 ---

@@ -176,15 +176,33 @@ python -m pytest tests/ -v
 
 ---
 
-## 9. 后续 Phase 3.1 建议
+## 9. Phase 3.1 完成情况
 
-Phase 3.1 方向：history stability check + UI polish。
+Phase 3.1 方向：UI polish（不做 Render SQLite 持久化验证，已知限制记录存档）。
 
-1. **Render 上 SQLite 行为验证**：部署后检查 `history.db` 是否随重启丢失，决定是否提前迁移 PostgreSQL。
-2. **历史列表 UI 优化**：加载状态（skeleton 或 spinner）；历史为空时的空状态引导文案。
-3. **超过 20 条的处理**：分页（`page` 参数）或"加载更多"按钮，或展示全部（上限放宽）。
-4. **HistoryPanel 布局位置评估**：根据用户反馈决定是否移入 sidebar 或 drawer，组件本身已解耦，移动零改动。
-5. **历史条目的视觉优化**：截断超长句子、显示成分类型统计，让历史列表更有信息量。
+### 已完成
+
+| 功能 | 状态 |
+|---|---|
+| history 加载状态（`historyLoading`）：fetch 时显示"加载中…" | ✅ |
+| 空历史文案优化：改为"分析句子后，记录会出现在这里" | ✅ |
+| 历史默认显示最近 5 条，超出时显示"查看更多（+N 条）"按钮 | ✅ |
+| 展开后显示"收起"按钮，可折叠回 5 条 | ✅ |
+| 折叠逻辑为纯前端 state，不改 API，不做分页 | ✅ |
+| 前端 `npm run build` 无报错（22 个模块） | ✅ |
+
+### 修改文件
+
+| 文件 | 修改内容 |
+|---|---|
+| `frontend/src/App.jsx` | 新增 `historyLoading` state；`useEffect` 加 `.finally` 清除加载态；向 `HistoryPanel` 传入 `loading` prop |
+| `frontend/src/components/HistoryPanel.jsx` | 接受 `loading` prop 显示加载文案；优化空状态文案；新增 `expanded` state + `COLLAPSED_LIMIT = 5` 折叠逻辑；新增"查看更多 / 收起"按钮 |
+
+### 未做（已知限制）
+
+- Render 上 SQLite 重启后丢失：已知限制，Phase 3 MVP 接受，记录存档，后续 Phase 4 决策是否迁移 PostgreSQL。
+- HistoryPanel 移入 sidebar/drawer：未做，组件已解耦，后续移动零改动。
+- 历史去重、搜索、删除、收藏、分页：Phase 3.x 均不做。
 
 ---
 

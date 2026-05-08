@@ -13,13 +13,13 @@
 当前阶段：
 
 ```text
-Phase 3 MVP — 历史记录（已完成 checkpoint）
-下一步：Phase 3.1 — history stability check + UI polish
+Phase 3.1 — UI polish（已完成）
+下一步：Phase 4 — 用户登录（待规划）
 ```
 
 Phase 3 MVP 已完成：SQLite 历史记录、`GET /api/history` 端点、前端 HistoryPanel、点击恢复原句和结果。
 
-Phase 3.1 目标：Render 上 SQLite 持久化行为验证、历史列表 UI 优化、超过 20 条记录的交互处理。
+Phase 3.1 已完成：history 加载状态、空历史文案优化、历史默认显示 5 条可展开/收起。Render 上 SQLite 丢失为已知限制，记录存档，不再作为 open question。
 
 ---
 
@@ -54,7 +54,7 @@ docs/PHASE_3_SUMMARY.md
 当前允许开发：
 
 ```text
-Phase 3.1 — history stability check + UI polish
+Phase 4 — 待规划（Phase 3.1 已完成）
 ```
 
 暂时不得实现以下功能：
@@ -213,6 +213,8 @@ AI coding agent 在执行任何任务前必须：
 7. `GET /api/history` 支持 `limit` 参数，默认 20，不写死。
 8. HistoryPanel 当前放在输入框下方、分析结果上方，做成纯 props 组件便于后续移动。
 9. 点击历史记录恢复 sentence + result，不重新请求 `/api/analyze`。
+13. Phase 3.1 已完成：history loading 状态、空历史文案优化、历史默认显示 5 条可展开/收起（纯前端 state，不改 API）。
+14. Render 上 SQLite 重启丢失为已知限制，不再作为 open question，后续 Phase 4 决策是否迁移。
 10. Mock Analyzer 必须保留。
 11. `/api/analyze` 接口路径保持不变。
 12. DeepSeek API key 只能放后端。
@@ -221,10 +223,9 @@ AI coding agent 在执行任何任务前必须：
 
 ## 12. Current Open Questions
 
-以下问题待 Phase 3.1 验证或决策：
+Phase 3.x 已无遗留 open questions。以下为 Phase 4 待规划决策：
 
-1. Render 上 `history.db` 是否实际会随重启丢失？（需部署后观察）
-2. 如果历史丢失严重影响体验，是否提前迁移 PostgreSQL？
-3. 历史列表超过 20 条时如何处理？（分页？加载更多？暂不处理？）
-4. HistoryPanel 是否需要移入 sidebar 或 drawer？
-5. 是否需要对历史条目加入简单的去重逻辑？
+1. Phase 4 是否引入用户登录？登录方案（邮箱/OAuth）？
+2. 用户登录后历史记录是否迁移为 user-scoped？
+3. 是否同时迁移数据库到 PostgreSQL？
+4. HistoryPanel 是否需要移入 sidebar 或 drawer？（组件已解耦，可随时移动）

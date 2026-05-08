@@ -9,10 +9,14 @@ export default function App() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [history, setHistory] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(true);
   const inputRef = useRef(null);
 
   useEffect(() => {
-    fetchHistory().then(setHistory).catch(() => {});
+    fetchHistory()
+      .then(setHistory)
+      .catch(() => {})
+      .finally(() => setHistoryLoading(false));
   }, []);
 
   async function handleAnalyze(sentence) {
@@ -27,7 +31,7 @@ export default function App() {
       }
       setResult(data);
       fetchHistory().then(setHistory).catch(() => {});
-    } catch (err) {
+    } catch(err) {
       setError(err.message || "分析服务暂时不可用，请稍后重试");
     } finally {
       setLoading(false);
@@ -60,7 +64,7 @@ export default function App() {
           </div>
         )}
 
-        <HistoryPanel items={history} onSelect={handleHistorySelect} />
+        <HistoryPanel items={history} onSelect={handleHistorySelect} loading={historyLoading} />
 
         {result && <AnalysisResult result={result} />}
       </main>
