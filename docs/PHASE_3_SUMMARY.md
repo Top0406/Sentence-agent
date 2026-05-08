@@ -176,6 +176,40 @@ python -m pytest tests/ -v
 
 ---
 
+## 10. Phase 3.2 完成情况
+
+Phase 3.2 目标：前端历史记录改为 browser-local localStorage，每个浏览器独立保存，不依赖后端。
+
+### 已完成
+
+| 功能 | 状态 |
+|---|---|
+| 新增 `frontend/src/api/localHistory.js`，封装 `getLocalHistory` / `saveToLocalHistory` | ✅ |
+| `App.jsx` history state 初始化改为懒加载 `useState(() => getLocalHistory())` | ✅ |
+| 分析成功后调用 `saveToLocalHistory(sentence, data)` 写入 localStorage | ✅ |
+| localStorage key `"sentence_history"`，最多保留 20 条，新条目插头部 | ✅ |
+| 刷新页面后历史保留（browser-local 持久化） | ✅ |
+| 不同浏览器 / 无痕窗口历史不共享 | ✅ |
+| 点击历史恢复 sentence + result，不重新请求 `/api/analyze` | ✅ |
+| 后端 SQLite + `/api/history` 保留，`client.js` 中 `fetchHistory` 保留，前端暂不调用 | ✅ |
+| 移除 `historyLoading` state 和 `useEffect` 异步 fetch（localStorage 同步读写，无需 loading） | ✅ |
+| `HistoryPanel.jsx` 零改动（`loading` 收到 `undefined` 时行为正确） | ✅ |
+| 前端 `npm run build` 无报错（23 个模块） | ✅ |
+
+### 修改文件
+
+| 文件 | 修改内容 |
+|---|---|
+| `frontend/src/api/localHistory.js`（新建） | `getLocalHistory()` 同步读取；`saveToLocalHistory()` 插头部、截断到 20 条、写回；parse 失败静默返回空数组 |
+| `frontend/src/App.jsx` | 引入 `localHistory`；移除 `fetchHistory` import 和 `useEffect` import；`history` state 改为懒初始化；分析成功后改为写 localStorage |
+
+### 未做
+
+- 后端数据库代码：零改动，保留供后续 Phase 4 使用
+- `HistoryPanel.jsx`、`client.js`：零改动
+
+---
+
 ## 9. Phase 3.1 完成情况
 
 Phase 3.1 方向：UI polish（不做 Render SQLite 持久化验证，已知限制记录存档）。
