@@ -13,13 +13,15 @@
 当前阶段：
 
 ```text
-Phase 3.1 — UI polish（已完成）
+Phase 3.2 — Browser-local history（已完成）
 下一步：Phase 4 — 用户登录（待规划）
 ```
 
 Phase 3 MVP 已完成：SQLite 历史记录、`GET /api/history` 端点、前端 HistoryPanel、点击恢复原句和结果。
 
-Phase 3.1 已完成：history 加载状态、空历史文案优化、历史默认显示 5 条可展开/收起。Render 上 SQLite 丢失为已知限制，记录存档，不再作为 open question。
+Phase 3.1 已完成：history 加载状态、空历史文案优化、历史默认显示 5 条可展开/收起。
+
+Phase 3.2 已完成：前端历史改为 browser-local localStorage，每个浏览器独立保存，刷新后历史保留，后端 SQLite 保留但前端暂不调用。
 
 ---
 
@@ -54,7 +56,7 @@ docs/PHASE_3_SUMMARY.md
 当前允许开发：
 
 ```text
-Phase 4 — 待规划（Phase 3.1 已完成）
+Phase 4 — 待规划（Phase 3.2 已完成）
 ```
 
 暂时不得实现以下功能：
@@ -215,6 +217,7 @@ AI coding agent 在执行任何任务前必须：
 9. 点击历史记录恢复 sentence + result，不重新请求 `/api/analyze`。
 13. Phase 3.1 已完成：history loading 状态、空历史文案优化、历史默认显示 5 条可展开/收起（纯前端 state，不改 API）。
 14. Render 上 SQLite 重启丢失为已知限制，不再作为 open question，后续 Phase 4 决策是否迁移。
+15. Phase 3.2 已完成：前端历史改为 browser-local localStorage（key: `"sentence_history"`，最多 20 条）；后端 SQLite 和 `/api/history` 保留，`client.js` 中 `fetchHistory` 保留，前端暂不调用。
 10. Mock Analyzer 必须保留。
 11. `/api/analyze` 接口路径保持不变。
 12. DeepSeek API key 只能放后端。

@@ -4,9 +4,9 @@
 
 ---
 
-## 当前阶段：Phase 3.1 — History UI Polish（已完成）
+## 当前阶段：Phase 3.2 — Browser-local History（已完成）
 
-在 Phase 3 历史记录 MVP 基础上，完成了 UI 稳定性小优化。
+历史记录改为 browser-local localStorage，每个浏览器独立保存，刷新后历史保留。
 
 | 功能 | 状态 |
 |---|---|
@@ -18,6 +18,7 @@
 | 点击历史恢复原句和结果 | ✅ Phase 3 |
 | 历史加载状态显示 | ✅ Phase 3.1 |
 | 历史默认显示 5 条，可展开/收起 | ✅ Phase 3.1 |
+| Browser-local localStorage 历史（每浏览器独立） | ✅ Phase 3.2 |
 
 ---
 
@@ -255,6 +256,7 @@ VITE_API_BASE_URL=https://your-service.onrender.com
 | Phase 2 | DeepSeek Analyzer 接入，start/end 修复，分析质量优化 | ✅ 完成 |
 | Phase 3 MVP | 历史记录功能，SQLite，HistoryPanel，点击恢复 | ✅ 完成 |
 | Phase 3.1 | History UI polish（加载态、空状态文案、折叠展示） | ✅ 完成 |
+| Phase 3.2 | Browser-local localStorage history | ✅ 完成 |
 | Phase 4 | 用户登录 + user-scoped history | 待规划 |
 
 ---
