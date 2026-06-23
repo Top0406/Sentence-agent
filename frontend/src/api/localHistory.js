@@ -1,12 +1,25 @@
 const STORAGE_KEY = "sentence_history";
 const MAX_ITEMS = 20;
 
+function isValidEntry(entry) {
+  return (
+    entry !== null &&
+    typeof entry === "object" &&
+    typeof entry.id !== "undefined" &&
+    typeof entry.sentence === "string" &&
+    entry.result !== null &&
+    typeof entry.result === "object" &&
+    typeof entry.created_at === "string"
+  );
+}
+
 export function getLocalHistory() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(isValidEntry);
   } catch {
     return [];
   }
@@ -27,4 +40,24 @@ export function saveToLocalHistory(sentence, result) {
     // storage quota exceeded — silently ignore
   }
   return updated;
+}
+
+export function deleteFromLocalHistory(id) {
+  const existing = getLocalHistory();
+  const updated = existing.filter((item) => item.id !== id);
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  } catch {
+    // ignore
+  }
+  return updated;
+}
+
+export function clearLocalHistory() {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // ignore
+  }
+  return [];
 }

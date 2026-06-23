@@ -4,7 +4,7 @@
 
 ---
 
-## 当前阶段：Phase 3 已完成 ✅ — 下一步 Phase 4（待规划）
+## 当前阶段：Phase 3.5 进行中 🚧 — Stability & Local History Polish
 
 | 功能 | 状态 |
 |---|---|
@@ -19,6 +19,12 @@
 | 输入框 focus ring、按钮交互状态、字数警告色 | ✅ Phase 3.3 |
 | loading 占位、布局调整（result 先于 history） | ✅ Phase 3.3 |
 | Bug fix：main_structure null guard / 网络错误中文化 | ✅ Phase 3.4 |
+| AbortController 超时（前端 55s） | ✅ Phase 3.5 |
+| 错误提示统一中文化（超时/网络/后端/模型） | ✅ Phase 3.5 |
+| localStorage 历史：删除单条 | ✅ Phase 3.5 |
+| localStorage 历史：清空全部 | ✅ Phase 3.5 |
+| 复制分析结果到剪贴板 | ✅ Phase 3.5 |
+| localStorage 安全降级（空/损坏/旧格式） | ✅ Phase 3.5 |
 
 ---
 
@@ -242,7 +248,7 @@ VITE_API_BASE_URL=https://your-service.onrender.com
 1. **单句输入，最大 500 字符。** 不支持多句或段落分析。
 2. **历史记录为全局共享。** 所有用户共享同一份历史，无隐私隔离（后续 Phase 4 加登录后改为 user-scoped）。
 3. **Render 上历史可能丢失。** Render 免费套餐文件系统不持久化，重启后 SQLite 历史消失。
-4. **前端 fetch 无超时设置。** 后端有 45s 超时，前端侧暂无。
+4. **前端 fetch 设有 55s AbortController 超时。** 超时后显示中文提示。（Phase 3.5 已修复）
 5. **DeepSeek 复杂长句准确率不保证。** 模型可能对复杂结构给出 warnings 或不完整分析。
 6. **Render Free 冷启动。** 15 分钟无请求后服务休眠，首次响应约需 30 秒。
 
@@ -259,6 +265,7 @@ VITE_API_BASE_URL=https://your-service.onrender.com
 | Phase 3.2 | Browser-local localStorage history | ✅ 完成 |
 | Phase 3.3 | UI/UX polish（交互状态、布局、高亮可读性） | ✅ 完成 |
 | Phase 3.4 | Final QA / Bug Sweep | ✅ 完成 |
+| Phase 3.5 | Stability & Local History Polish（超时/错误中文化/历史管理/复制结果） | 🚧 进行中 |
 | Phase 4 | 待规划（需先创建 PHASE_4_SPEC.md） | 未开始 |
 
 ---

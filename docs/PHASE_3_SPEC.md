@@ -269,3 +269,87 @@ Phase 3.1 方向：history stability check + UI polish。
 | 13 | HistoryPanel 是纯 props 组件，不感知布局位置 | ✅ |
 | 14 | `*.db` 文件已加入 `.gitignore` | ✅ |
 | 15 | 后端自动化测试 12/12 通过 | ✅ |
+
+---
+
+## 12. Phase 3.5 规划 — Stability & Local History Polish
+
+### 12.1 目标
+
+Phase 3.5 是 Phase 3 的收尾补强，不引入新产品大架构。目标：让产品在真实使用中更稳定、更可理解、更可控。
+
+不新建独立 SPEC/SUMMARY 文档；规划追加到本文件，完成情况追加到 `docs/PHASE_3_SUMMARY.md`。
+
+### 12.2 功能范围
+
+#### F1：前端 analyze 请求增加 AbortController 超时
+
+- 在 `client.js` 的 `analyzeSentence` 中使用 `AbortController`，超时时长 **55 秒**。
+- 超时后取消 fetch（`controller.abort()`），进入统一中文错误提示流程。
+- 用 `finally { clearTimeout(timeoutId) }` 确保正常完成时不残留 timer。
+
+#### F2：错误提示统一中文化
+
+在 `App.jsx` catch 块中按 `err.name` / `err.message` 区分：
+
+| 错误类型 | 提示文案 |
+|---|---|
+| `AbortError`（前端 55s 超时） | "分析请求超时，请稍后重试" |
+| `Failed to fetch`（网络断开） | "无法连接到分析服务，请检查网络后重试" |
+| 后端返回 5xx（client.js 已解析） | 后端返回的中文 message，或"分析服务暂时不可用，请稍后重试" |
+| 格式异常 | "分析结果格式异常，请稍后重试" |
+
+#### F3：localStorage 历史删除单条
+
+- `localHistory.js` 新增 `deleteFromLocalHistory(id)` — 过滤掉指定 id 后写回 localStorage，返回新数组。
+- `HistoryPanel.jsx` 每条记录右侧增加 × 按钮，hover 时显示（opacity 0→1）；点击时 `e.stopPropagation()` 防止触发 onSelect。
+- `App.jsx` 新增 `handleDeleteItem(id)` 回调，传入 HistoryPanel。
+
+#### F4：localStorage 历史清空全部
+
+- `localHistory.js` 新增 `clearLocalHistory()` — `localStorage.removeItem(STORAGE_KEY)`，返回 `[]`。
+- `HistoryPanel.jsx` 标题行右侧增加"清空全部"按钮（仅在有历史时渲染该区域）。
+- `App.jsx` 新增 `handleClearHistory()` 回调，传入 HistoryPanel。
+
+#### F5：复制分析结果到剪贴板
+
+- `AnalysisResult.jsx` 顶部增加"复制结果"按钮。
+- 复制内容（纯文本）：原句、译文、主句结构（主语/谓语/宾表语）、中文解释。
+- 使用 `navigator.clipboard.writeText()`；成功后按钮文字变为"已复制 ✓"，2 秒后复原。
+
+#### F6：localStorage 安全降级
+
+`localHistory.js` 的 `getLocalHistory()` 验证并处理以下场景：
+
+| 场景 | 处理方式 |
+|---|---|
+| localStorage 为空 | 返回 `[]` |
+| JSON parse 失败（损坏数据） | catch → 返回 `[]` |
+| 非数组数据 | 返回 `[]` |
+| 条目缺少 `id`/`sentence`/`result`/`created_at` 字段 | `filter(isValidEntry)` 过滤无效条目 |
+| `saveToLocalHistory` 写入失败（配额超限） | catch 静默忽略，返回内存中的数组 |
+
+#### F7：Phase 3.5 QA Checklist
+
+完成后在 `tests/manual_qa.md` 中执行并记录（产品功能类 QA，与 DeepSeek 分析质量记录分开）。
+
+### 12.3 不做的内容
+
+登录/注册、user_id、多用户、PostgreSQL、云历史迁移、历史搜索/收藏/标签/分页、支付、管理后台、新 analyzer provider、多句/段落分析、大规模 UI 重构、修改 /api/analyze 路径、修改 AnalyzeResponse schema、修改 Render/Vercel 生产配置、暴露 API key。
+
+后端原则上零改动（Phase 3.5 无 critical bug 发现，实际后端未改动）。
+
+### 12.4 验收清单
+
+| # | 验收项 |
+|---|---|
+| 1 | analyze 请求有 55s AbortController 超时，超时触发"分析请求超时"中文提示 |
+| 2 | 网络断开时显示"无法连接到分析服务"中文提示，非英文 "Failed to fetch" |
+| 3 | 后端返回错误时显示中文提示 |
+| 4 | localStorage 历史每条有 × 删除按钮，hover 显示，点击后该条移除 |
+| 5 | HistoryPanel 有"清空全部"按钮，点击后历史清空 |
+| 6 | 分析结果区有"复制结果"按钮，复制后显示"已复制 ✓" |
+| 7 | localStorage 空/损坏/旧格式时安全降级，不崩溃 |
+| 8 | `npm run build` 无报错 |
+| 9 | `tests/manual_qa.md` QA checklist 全部通过 |
+| 10 | 后端代码零改动 |

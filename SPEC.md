@@ -13,8 +13,8 @@
 当前阶段：
 
 ```text
-Phase 3 — 已完成 ✅ checkpoint
-下一步：Phase 4（需先创建 docs/PHASE_4_SPEC.md）
+Phase 3.5 — 进行中 🚧
+（Phase 3 收尾补强，代号 Stability & Local History Polish）
 ```
 
 ### Phase 3 完成记录
@@ -24,6 +24,10 @@ Phase 3 — 已完成 ✅ checkpoint
 - **Phase 3.2**：前端历史改为 browser-local localStorage，每个浏览器独立保存，刷新后历史保留，后端 SQLite 保留但前端暂不调用。
 - **Phase 3.3**：整体 UI/UX polish——输入框 focus ring、按钮交互状态、字数警告色、loading 占位、布局顺序调整（result 先于 history）、section title 样式、高亮词可读性优化。
 - **Phase 3.4**：Final QA / Bug Sweep——修复 `main_structure` null crash、"Failed to fetch" 中文化，build 通过，QA 验收完成。
+
+### Phase 3.5 完成记录（开发中）
+
+- **Phase 3.5**：Stability & Local History Polish——AbortController 超时（55s）、错误中文化、历史删除单条/清空、复制结果、localStorage 安全降级。
 
 ### Phase 4 前置要求
 
@@ -62,7 +66,8 @@ docs/PHASE_3_SUMMARY.md
 当前允许开发：
 
 ```text
-Phase 4 — 待规划（需先创建 docs/PHASE_4_SPEC.md 并经用户确认）
+Phase 3.5 — Stability & Local History Polish
+（详见 docs/PHASE_3_SPEC.md Section 12）
 ```
 
 暂时不得实现以下功能：
@@ -227,6 +232,14 @@ AI coding agent 在执行任何任务前必须：
 16. Phase 3.3 已完成：UI/UX polish，仅改前端样式和布局，零后端改动，零 API schema 改动。
 17. Phase 3.4 已完成：Final QA / Bug Sweep，修复 `main_structure` null crash 和 "Failed to fetch" 中文化，build 通过。
 18. Phase 3 已完成并通过 QA checkpoint。Phase 4 开始前必须先创建并确认 `docs/PHASE_4_SPEC.md`。
+19. Phase 3.5 启动：Stability & Local History Polish，属 Phase 3 收尾，不新建独立文档，规划追加到 `docs/PHASE_3_SPEC.md` Section 12。
+20. Phase 3.5 前端 analyze 请求使用 AbortController，超时时长 55s。
+21. Phase 3.5 错误提示全面中文化（AbortError 超时 / Failed to fetch 网络断开 / 后端不可用 / 模型格式异常）。
+22. Phase 3.5 localStorage 历史增加删除单条（每行 × 按钮）和清空全部功能。
+23. Phase 3.5 分析结果区增加"复制结果"按钮，复制纯文本摘要到剪贴板。
+24. Phase 3.5 localStorage 安全降级：空/损坏/旧格式数据时过滤并返回 `[]`，不崩溃。
+25. Phase 3.5 后端零改动（无 critical bug 发现）。
+26. Phase 3.5 QA 记录在 `tests/manual_qa.md`（产品功能类手动 QA），不追加到 `tests/test_results.md`（DeepSeek 分析质量记录）。
 10. Mock Analyzer 必须保留。
 11. `/api/analyze` 接口路径保持不变。
 12. DeepSeek API key 只能放后端。

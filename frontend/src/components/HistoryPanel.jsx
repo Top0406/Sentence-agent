@@ -2,7 +2,7 @@ import { useState } from "react";
 
 const COLLAPSED_LIMIT = 5;
 
-function HistoryItem({ item, onSelect }) {
+function HistoryItem({ item, onSelect, onDelete }) {
   const [hovered, setHovered] = useState(false);
   return (
     <li
@@ -17,11 +17,18 @@ function HistoryItem({ item, onSelect }) {
           : item.sentence}
       </span>
       <span style={styles.time}>{formatTime(item.created_at)}</span>
+      <button
+        style={{ ...styles.deleteBtn, opacity: hovered ? 1 : 0 }}
+        title="删除此条"
+        onClick={(e) => { e.stopPropagation(); onDelete(item.id); }}
+      >
+        ×
+      </button>
     </li>
   );
 }
 
-export default function HistoryPanel({ items, onSelect, loading }) {
+export default function HistoryPanel({ items, onSelect, onDelete, onClear, loading }) {
   const [expanded, setExpanded] = useState(false);
 
   if (loading) {
@@ -46,10 +53,13 @@ export default function HistoryPanel({ items, onSelect, loading }) {
 
   return (
     <div style={styles.card}>
-      <h2 style={styles.heading}>最近分析</h2>
+      <div style={styles.headingRow}>
+        <h2 style={styles.heading}>最近分析</h2>
+        <button style={styles.clearBtn} onClick={onClear}>清空全部</button>
+      </div>
       <ul style={styles.list}>
         {visible.map((item) => (
-          <HistoryItem key={item.id} item={item} onSelect={onSelect} />
+          <HistoryItem key={item.id} item={item} onSelect={onSelect} onDelete={onDelete} />
         ))}
       </ul>
       {hasMore && (
@@ -81,11 +91,37 @@ const styles = {
     borderRadius: 8,
     padding: "16px",
   },
+  headingRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
+  },
   heading: {
-    margin: "0 0 10px",
+    margin: 0,
     fontSize: 14,
     fontWeight: 600,
     color: "#374151",
+  },
+  clearBtn: {
+    background: "none",
+    border: "none",
+    color: "#9ca3af",
+    fontSize: 12,
+    cursor: "pointer",
+    padding: "2px 4px",
+  },
+  deleteBtn: {
+    background: "none",
+    border: "none",
+    color: "#9ca3af",
+    fontSize: 14,
+    cursor: "pointer",
+    padding: "0 2px",
+    lineHeight: 1,
+    flexShrink: 0,
+    opacity: 0,
+    transition: "opacity 0.1s",
   },
   list: {
     margin: 0,

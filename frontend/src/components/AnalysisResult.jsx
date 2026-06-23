@@ -1,8 +1,34 @@
+import { useState } from "react";
 import HighlightedSentence from "./HighlightedSentence";
 import Legend from "./Legend";
 import { COLOR_MAP } from "./Legend";
 
+function buildCopyText(result) {
+  const lines = [`原句：${result.original_sentence}`];
+  if (result.translation_zh) lines.push(`译文：${result.translation_zh}`);
+  if (result.main_structure) {
+    const parts = [];
+    if (result.main_structure.subject) parts.push(`主语：${result.main_structure.subject}`);
+    if (result.main_structure.predicate) parts.push(`谓语：${result.main_structure.predicate}`);
+    if (result.main_structure.object_or_complement) parts.push(`宾/表语：${result.main_structure.object_or_complement}`);
+    if (parts.length) lines.push(parts.join("  "));
+  }
+  if (result.explanation_zh) lines.push(`解释：${result.explanation_zh}`);
+  return lines.join("\n");
+}
+
 export default function AnalysisResult({ result }) {
+  const [copied, setCopied] = useState(false);
+
+  function handleCopy() {
+    const text = buildCopyText(result);
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }).catch(() => {});
+    }
+  }
   const {
     original_sentence,
     translation_zh,
@@ -15,6 +41,12 @@ export default function AnalysisResult({ result }) {
 
   return (
     <div style={styles.container}>
+      <div style={styles.toolbar}>
+        <button style={styles.copyBtn} onClick={handleCopy}>
+          {copied ? "已复制 ✓" : "复制结果"}
+        </button>
+      </div>
+
       {/* Highlighted sentence */}
       <section style={styles.card}>
         <h3 style={styles.sectionTitle}>句子高亮</h3>
@@ -130,6 +162,19 @@ const styles = {
     display: "flex",
     flexDirection: "column",
     gap: 16,
+  },
+  toolbar: {
+    display: "flex",
+    justifyContent: "flex-end",
+  },
+  copyBtn: {
+    background: "none",
+    border: "1px solid #d1d5db",
+    borderRadius: 6,
+    color: "#6b7280",
+    fontSize: 12,
+    cursor: "pointer",
+    padding: "4px 10px",
   },
   card: {
     background: "#fff",

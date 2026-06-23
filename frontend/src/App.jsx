@@ -3,7 +3,7 @@ import SentenceInput from "./components/SentenceInput";
 import AnalysisResult from "./components/AnalysisResult";
 import HistoryPanel from "./components/HistoryPanel";
 import { analyzeSentence } from "./api/client";
-import { getLocalHistory, saveToLocalHistory } from "./api/localHistory";
+import { getLocalHistory, saveToLocalHistory, deleteFromLocalHistory, clearLocalHistory } from "./api/localHistory";
 
 export default function App() {
   const [loading, setLoading] = useState(false);
@@ -25,9 +25,14 @@ export default function App() {
       setResult(data);
       setHistory(saveToLocalHistory(sentence, data));
     } catch(err) {
-      const msg = err.message === "Failed to fetch"
-        ? "无法连接到分析服务，请检查网络后重试"
-        : err.message || "分析服务暂时不可用，请稍后重试";
+      let msg;
+      if (err.name === "AbortError") {
+        msg = "分析请求超时，请稍后重试";
+      } else if (err.message === "Failed to fetch") {
+        msg = "无法连接到分析服务，请检查网络后重试";
+      } else {
+        msg = err.message || "分析服务暂时不可用，请稍后重试";
+      }
       setError(msg);
     } finally {
       setLoading(false);
@@ -40,6 +45,14 @@ export default function App() {
     if (inputRef.current) {
       inputRef.current.setValue(item.sentence);
     }
+  }
+
+  function handleDeleteItem(id) {
+    setHistory(deleteFromLocalHistory(id));
+  }
+
+  function handleClearHistory() {
+    setHistory(clearLocalHistory());
   }
 
   return (
@@ -68,7 +81,12 @@ export default function App() {
 
         {result && <AnalysisResult result={result} />}
 
-        <HistoryPanel items={history} onSelect={handleHistorySelect} />
+        <HistoryPanel
+          items={history}
+          onSelect={handleHistorySelect}
+          onDelete={handleDeleteItem}
+          onClear={handleClearHistory}
+        />
       </main>
     </div>
   );
