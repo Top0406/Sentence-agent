@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import SentenceInput from "./components/SentenceInput";
 import AnalysisResult from "./components/AnalysisResult";
 import HistoryPanel from "./components/HistoryPanel";
+import AnnotationDemo from "./components/annotation/AnnotationDemo";
 import { analyzeSentence } from "./api/client";
 import { getLocalHistory, saveToLocalHistory, deleteFromLocalHistory, clearLocalHistory } from "./api/localHistory";
 
@@ -80,6 +81,8 @@ export default function App() {
         )}
 
         {result && <AnalysisResult result={result} />}
+
+        <AnnotationDemo />
 
         <HistoryPanel
           items={history}
